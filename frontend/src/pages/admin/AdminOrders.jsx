@@ -16,24 +16,23 @@ const AdminOrders = () => {
       await axios.put(`http://localhost:5000/api/orders/${id}/status`, { status }, config);
       toast.success(`Order Marked as ${status}`);
       fetchOrders();
-    } catch (error) {
-      toast.error("Status update failed");
-    }
+    } catch (error) { toast.error("Status update failed"); }
   };
 
-  // --- SMART IMAGE FIXER FUNCTION ---
+  const handleDelete = async (id) => {
+    if(!window.confirm("Are you sure you want to DELETE this order?")) return;
+    try {
+      await axios.delete(`http://localhost:5000/api/orders/${id}`, config);
+      toast.success("Order Deleted");
+      fetchOrders();
+    } catch (error) { toast.error("Delete failed"); }
+  };
+
+  // Smart Image Fixer
   const getImageUrl = (item) => {
-    // 1. Image dhoondo (ya item.image ho, ya item.images array ka pehla hissa)
     let img = item.image || (item.images && item.images.length > 0 ? item.images[0] : null);
-    
-    // 2. Agar koi image nahi hai, to Placeholder dikhao
     if (!img) return 'https://via.placeholder.com/50';
-
-    // 3. Agar image ka link "http" se shuru hota hai (Naya Order), to waisa hi return karo
     if (img.startsWith('http')) return img;
-
-    // 4. Agar image ka link adha hai (Purana Order), to uske peeche localhost lagao
-    // Backslash (\) ko Forward slash (/) mein badalna zaroori hai
     return `http://localhost:5000/${img.replace(/\\/g, '/')}`;
   };
 
@@ -62,51 +61,55 @@ const AdminOrders = () => {
                <tr>
                  <th className="p-4 text-sm font-semibold">Order ID</th>
                  <th className="p-4 text-sm font-semibold">Customer</th>
-                 <th className="p-4 text-sm font-semibold w-72">Ordered Items (Qty)</th>
-                 <th className="p-4 text-sm font-semibold">Phone</th>
-                 <th className="p-4 text-sm font-semibold">Address</th>
+                 <th className="p-4 text-sm font-semibold w-48">Address</th> {/* ADDED ADDRESS COLUMN */}
+                 <th className="p-4 text-sm font-semibold w-72">Ordered Items</th>
                  <th className="p-4 text-sm font-semibold">Total</th>
                  <th className="p-4 text-sm font-semibold">Status</th>
                  <th className="p-4 text-sm font-semibold">Action</th>
+                 <th className="p-4 text-sm font-semibold text-center">Delete</th>
                </tr>
              </thead>
              <tbody className="text-gray-700">
                {orders.map(o => (
                  <tr key={o._id} className="border-b hover:bg-gray-50 transition align-top">
-                   <td className="p-4 text-xs font-mono text-gray-500">{o._id.substring(0, 10)}...</td>
-                   <td className="p-4 font-medium">{o.customerDetails.name}</td>
                    
-                   {/* PRODUCT NAME & IMAGE */}
+                   {/* Order ID */}
+                   <td className="p-4 text-xs font-mono text-gray-500">{o._id.substring(0, 8)}...</td>
+                   
+                   {/* Customer Name & Phone */}
+                   <td className="p-4 font-medium">
+                       <div className="text-gray-900 font-bold">{o.customerDetails.name}</div>
+                       <div className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                         <i className="fa-solid fa-phone"></i> {o.customerDetails.phone}
+                       </div>
+                   </td>
+
+                   {/* ADDRESS COLUMN (ADDED) */}
+                   <td className="p-4 text-sm text-gray-600 max-w-xs" title={o.customerDetails.address}>
+                     {o.customerDetails.address}
+                   </td>
+                   
+                   {/* Ordered Items */}
                    <td className="p-4 text-sm">
                      {o.orderItems.map((item, index) => (
                        <div key={index} className="flex items-center gap-3 mb-2 border-b pb-2 last:border-0">
-                         
-                         {/* Using Smart Image Fixer */}
-                         <img 
-                           src={getImageUrl(item)} 
-                           alt={item.name} 
-                           className="w-12 h-12 object-cover rounded border border-gray-300"
-                           onError={(e) => { e.target.src = 'https://via.placeholder.com/50?text=No+Img'; }} // Fallback if still fails
-                         />
-                         
+                         <img src={getImageUrl(item)} alt={item.name} className="w-10 h-10 object-cover rounded border" />
                          <div>
-                            <p className="font-bold text-gray-800 leading-tight">{item.name}</p>
-                            <p className="text-xs text-gray-500 mt-1">
-                                Qty: <span className="font-bold text-black">{item.qty}</span> 
-                                {item.color && <span> | Color: {item.color}</span>}
+                            <p className="font-bold text-gray-800 leading-tight text-xs">{item.name}</p>
+                            <p className="text-[10px] text-gray-500 mt-1">
+                                Qty: <b>{item.qty}</b> 
+                                {item.color && <span> | {item.color}</span>}
+                                {item.size && <span className="text-blue-600 font-bold"> | {item.size}</span>}
                             </p>
                          </div>
                        </div>
                      ))}
                    </td>
 
-                   <td className="p-4 text-sm">{o.customerDetails.phone}</td>
-                   <td className="p-4 text-sm max-w-xs truncate" title={o.customerDetails.address}>
-                     {o.customerDetails.address}
-                   </td>
-
+                   {/* Total Price */}
                    <td className="p-4 font-bold text-green-700">Rs. {o.totalPrice}</td>
                    
+                   {/* Status Badge */}
                    <td className="p-4">
                      <span className={`px-3 py-1 rounded-full text-xs font-bold text-white block text-center shadow-sm
                        ${o.status === 'Pending' ? 'bg-yellow-500' : 
@@ -118,18 +121,22 @@ const AdminOrders = () => {
                      </span>
                    </td>
                    
+                   {/* Action Dropdown */}
                    <td className="p-4">
-                     <select 
-                       onChange={(e) => updateStatus(o._id, e.target.value)} 
-                       value={o.status} 
-                       className="border border-gray-300 p-2 rounded text-sm focus:outline-none focus:ring-2 focus:ring-green-500 cursor-pointer w-full bg-white"
-                     >
+                     <select onChange={(e) => updateStatus(o._id, e.target.value)} value={o.status} className="border border-gray-300 p-2 rounded text-sm w-full bg-white focus:ring-2 focus:ring-green-500 outline-none">
                        <option value="Pending">Pending</option>
                        <option value="Confirmed">Confirmed</option>
-                       <option value="Rejected">Rejected</option>
                        <option value="Shipped">Shipped</option>
                        <option value="Delivered">Delivered</option>
+                       <option value="Rejected">Rejected</option>
                      </select>
+                   </td>
+
+                   {/* Delete Button */}
+                   <td className="p-4 text-center align-middle">
+                       <button onClick={() => handleDelete(o._id)} className="text-red-500 hover:text-red-700 font-bold text-lg transition transform hover:scale-110" title="Delete Order">
+                           X
+                       </button>
                    </td>
                  </tr>
                ))}

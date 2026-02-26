@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
@@ -15,7 +16,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// --- CLOUDINARY CONFIG (Images Cloud par save hongi) ---
+// CLOUDINARY CONFIG
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -25,21 +26,18 @@ cloudinary.config({
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: 'toheed_couture_products', // Cloudinary folder name
+    folder: 'toheed_couture',
     allowed_formats: ['jpg', 'png', 'jpeg', 'webp'],
   },
 });
 
 const upload = multer({ storage });
 
-// --- UPLOAD ROUTE ---
 app.post('/api/upload', upload.array('images', 10), (req, res) => {
-  // Cloudinary returns the URL in 'path'
   const imagePaths = req.files.map(file => file.path);
   res.send(imagePaths);
 });
 
-// Database Connection
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('MongoDB Connected'))
   .catch(err => console.log(err));
@@ -53,6 +51,7 @@ const userSchema = new mongoose.Schema({
 });
 const User = mongoose.model('User', userSchema);
 
+// UPDATED PRODUCT SCHEMA (Added Sizes Array)
 const productSchema = new mongoose.Schema({
   name: { type: String, required: true },
   category: { type: String, required: true },
@@ -63,13 +62,18 @@ const productSchema = new mongoose.Schema({
   description: { type: String },
   images: [{ type: String }],
   colors: [{ type: String }],
+  // NEW: SIZES WITH DETAILS
+  sizes: [{ 
+    name: String,       // e.g., Small
+    dimensions: String  // e.g., Length 38, Chest 19
+  }],
   stock: { type: Number, default: 0 },
 }, { timestamps: true });
 const Product = mongoose.model('Product', productSchema);
 
 const orderSchema = new mongoose.Schema({
   customerDetails: { name: String, email: String, address: String, phone: String },
-  orderItems: [],
+  orderItems: [], // Isme size save hoga
   totalPrice: Number,
   status: { type: String, default: 'Pending' },
 }, { timestamps: true });
@@ -89,7 +93,7 @@ const settingSchema = new mongoose.Schema({
 });
 const Setting = mongoose.model('Setting', settingSchema);
 
-// --- MIDDLEWARE ---
+// MIDDLEWARE
 const protect = async (req, res, next) => {
   let token;
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
@@ -107,7 +111,7 @@ const admin = (req, res, next) => {
   else res.status(401).json({ message: 'Not authorized as admin' });
 };
 
-// --- ROUTES ---
+// ROUTES
 app.post('/api/users/login', async (req, res) => {
   const { email, password } = req.body;
   const user = await User.findOne({ email });
@@ -136,7 +140,17 @@ app.post('/api/products', protect, admin, async (req, res) => res.status(201).js
 app.put('/api/products/:id', protect, admin, async (req, res) => {
   const product = await Product.findById(req.params.id);
   if (product) {
-    Object.assign(product, req.body);
+    product.name = req.body.name || product.name;
+    product.price = req.body.price || product.price;
+    product.description = req.body.description || product.description;
+    product.images = req.body.images || product.images; 
+    product.colors = req.body.colors || product.colors;
+    product.sizes = req.body.sizes || product.sizes; // Sizes Update
+    product.category = req.body.category || product.category;
+    product.stock = req.body.stock || product.stock;
+    product.isOnSale = req.body.isOnSale;
+    product.salePrice = req.body.salePrice;
+    product.saleEndDate = req.body.saleEndDate;
     const updatedProduct = await product.save();
     res.json(updatedProduct);
   } else { res.status(404).json({ message: 'Product not found' }); }
@@ -154,6 +168,17 @@ app.put('/api/orders/:id/status', protect, admin, async (req, res) => {
   if (order) { order.status = req.body.status; await order.save(); res.json(order); }
 });
 
+// NEW: DELETE ORDER ROUTE
+app.delete('/api/orders/:id', protect, admin, async (req, res) => {
+  const order = await Order.findById(req.params.id);
+  if (order) {
+    await order.deleteOne();
+    res.json({ message: 'Order removed' });
+  } else {
+    res.status(404).json({ message: 'Order not found' });
+  }
+});
+
 app.get('/api/settings', async (req, res) => {
   let settings = await Setting.findOne();
   if (!settings) settings = await Setting.create({});
@@ -163,6 +188,12 @@ app.get('/api/settings', async (req, res) => {
 app.put('/api/settings', protect, admin, async (req, res) => {
   let settings = await Setting.findOne();
   if (!settings) settings = new Setting({});
+  
+  if (req.body.logo !== undefined) settings.logo = req.body.logo;
+  if (req.body.banners !== undefined) settings.banners = req.body.banners;
+  if (req.body.lowerBanners !== undefined) settings.lowerBanners = req.body.lowerBanners;
+  if (req.body.quickLinks !== undefined) settings.quickLinks = req.body.quickLinks;
+  
   Object.assign(settings, req.body);
   const updatedSettings = await settings.save();
   res.json(updatedSettings);

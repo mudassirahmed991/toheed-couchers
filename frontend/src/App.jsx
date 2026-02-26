@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import axios from 'axios';
+import { FaWhatsapp } from 'react-icons/fa'; // IMPORT ADDED
 
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -18,7 +19,7 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminProducts from './pages/admin/AdminProducts';
 import AdminOrders from './pages/admin/AdminOrders';
 import AdminSettings from './pages/admin/AdminSettings';
-import AdminBanners from './pages/admin/AdminBanners'; // NEW
+import AdminBanners from './pages/admin/AdminBanners';
 import AdminLogo from './pages/admin/AdminLogo';
 
 export const GlobalContext = React.createContext();
@@ -39,16 +40,19 @@ function App() {
 
   useEffect(() => { fetchSettings(); }, []);
 
-  const addToCart = (product, qty, color) => {
-    const existItem = cart.find((x) => x._id === product._id);
+  const addToCart = (product, qty, color, size) => {
+    const cartId = `${product._id}-${color}-${size || 'nosize'}`;
+    const existItem = cart.find((x) => x.cartId === cartId);
     if (existItem) {
-      setCart(cart.map((x) => x._id === product._id ? { ...existItem, qty: existItem.qty + qty } : x));
+      setCart(cart.map((x) => x.cartId === cartId ? { ...existItem, qty: existItem.qty + qty } : x));
     } else {
-      setCart([...cart, { ...product, qty, color }]);
+      setCart([...cart, { ...product, qty, color, size, cartId }]);
     }
   };
 
-  const removeFromCart = (id) => setCart(cart.filter((x) => x._id !== id));
+  const removeFromCart = (cartId) => {
+    setCart(cart.filter((x) => x.cartId !== cartId));
+  };
 
   return (
     <GlobalContext.Provider value={{ user, setUser, cart, setCart, addToCart, removeFromCart, settings, fetchSettings }}>
@@ -62,7 +66,6 @@ function App() {
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/login" element={<Login />} />
             
-            {/* Admin Routes */}
             <Route path="/admin" element={<PrivateRoute adminOnly><AdminDashboard /></PrivateRoute>} />
             <Route path="/admin/products" element={<PrivateRoute adminOnly><AdminProducts /></PrivateRoute>} />
             <Route path="/admin/orders" element={<PrivateRoute adminOnly><AdminOrders /></PrivateRoute>} />
@@ -73,9 +76,17 @@ function App() {
         </main>
         <Footer />
         <ToastContainer />
+        
+        {/* FIXED WHATSAPP BUTTON */}
         {settings.whatsapp && (
-          <a href={`https://wa.me/${settings.whatsapp}`} target="_blank" rel="noreferrer" className="fixed bottom-5 right-5 bg-green-500 text-white p-4 rounded-full shadow-lg text-2xl z-50 hover:bg-green-600 transition">
-            <i className="fa-brands fa-whatsapp"></i> WA
+          <a 
+            href={`https://wa.me/${settings.whatsapp}`} 
+            target="_blank" 
+            rel="noreferrer" 
+            className="fixed bottom-6 right-6 bg-[#25D366] text-white p-3 rounded-full shadow-2xl z-50 hover:bg-[#128C7E] transition-all duration-300 hover:scale-110 flex items-center justify-center"
+            style={{ width: '60px', height: '60px' }}
+          >
+            <FaWhatsapp size={35} />
           </a>
         )}
       </Router>
