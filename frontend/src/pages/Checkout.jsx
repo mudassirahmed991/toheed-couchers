@@ -19,7 +19,7 @@ const Checkout = () => {
         customerDetails: details,
         totalPrice: total
       };
-      await axios.post('http://localhost:5000/api/orders', orderData);
+      await axios.post('https://toheedcouture.com/api/orders', orderData);
       setCart([]);
       localStorage.removeItem('cartItems');
       toast.success('Order Placed Successfully!');

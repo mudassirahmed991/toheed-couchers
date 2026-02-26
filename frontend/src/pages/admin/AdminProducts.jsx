@@ -20,7 +20,7 @@ const AdminProducts = () => {
   const token = JSON.parse(localStorage.getItem('userInfo')).token;
   const config = { headers: { Authorization: `Bearer ${token}` } };
 
-  const fetchProducts = () => axios.get('http://localhost:5000/api/products').then(res => setProducts(res.data));
+  const fetchProducts = () => axios.get('https://toheedcouture.com/api/products').then(res => setProducts(res.data));
   useEffect(() => { fetchProducts(); }, []);
 
   const uploadFileHandler = async (e) => {
@@ -29,7 +29,7 @@ const AdminProducts = () => {
     for (let i = 0; i < files.length; i++) { formData.append('images', files[i]); }
     setUploading(true);
     try {
-      const { data } = await axios.post('http://localhost:5000/api/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' }});
+      const { data } = await axios.post('https://toheedcouture.com/api/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' }});
       setForm({...form, images: [...form.images, ...data]});
       setUploading(false);
     } catch (error) { toast.error('Upload Failed'); setUploading(false); }
@@ -83,11 +83,11 @@ const AdminProducts = () => {
     if (form.images.length === 0) return toast.error("Upload at least one image!");
     try {
       if (isEditing) {
-        await axios.put(`http://localhost:5000/api/products/${editId}`, form, config);
+        await axios.put(`https://toheedcouture.com/api/products/${editId}`, form, config);
         toast.success('Product Updated');
         handleCancelEdit();
       } else {
-        await axios.post('http://localhost:5000/api/products', form, config);
+        await axios.post('https://toheedcouture.com/api/products', form, config);
         toast.success('Product Added');
         setForm({ name: '', price: '', category: '', images: [], colors: [], sizes: [], stock: '', description: '', isOnSale: false, salePrice: 0, saleEndDate: '' });
       }
@@ -97,7 +97,7 @@ const AdminProducts = () => {
 
   const handleDelete = async (id) => {
     if(window.confirm('Delete this product?')) {
-      await axios.delete(`http://localhost:5000/api/products/${id}`, config);
+      await axios.delete(`https://toheedcouture.com/api/products/${id}`, config);
       fetchProducts();
     }
   };

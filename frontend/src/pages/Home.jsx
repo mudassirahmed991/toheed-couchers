@@ -47,7 +47,7 @@ const Home = () => {
   useEffect(() => {
     const fetchAndShuffle = async () => {
       try {
-        const { data } = await axios.get('http://localhost:5000/api/products');
+        const { data } = await axios.get('https://toheedcouture.com/api/products');
         
         if (categoryFilter) {
           const filtered = data.filter(p => 

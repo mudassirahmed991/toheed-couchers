@@ -21,7 +21,7 @@ const AdminSettings = () => {
     try {
       // Remove banners from here to prevent overwrite, just update text fields
       const { banners, lowerBanners, ...settingsToUpdate } = form; 
-      await axios.put('http://localhost:5000/api/settings', settingsToUpdate, config);
+      await axios.put('https://toheedcouture.com/api/settings', settingsToUpdate, config);
       toast.success('Settings Updated Successfully');
       fetchSettings();
     } catch (err) { toast.error('Error updating settings'); }

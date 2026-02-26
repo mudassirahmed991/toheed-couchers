@@ -23,7 +23,7 @@ const ProductDetails = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    axios.get(`http://localhost:5000/api/products/${id}`).then(res => {
+    axios.get(`https://toheedcouture.com/api/products/${id}`).then(res => {
         setProduct(res.data);
         setMainImage(res.data.images && res.data.images.length > 0 ? res.data.images[0] : '');
 

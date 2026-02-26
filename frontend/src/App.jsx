@@ -33,7 +33,7 @@ function App() {
   
   const fetchSettings = async () => {
     try {
-      const { data } = await axios.get('http://localhost:5000/api/settings');
+      const { data } = await axios.get('https://toheedcouture.com/api/settings');
       setSettings(data);
     } catch (error) { console.error(error); }
   };

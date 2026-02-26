@@ -21,7 +21,7 @@ const AdminBanners = () => {
     
     setUploadingTop(true);
     try {
-      const { data } = await axios.post('http://localhost:5000/api/upload', formData, {
+      const { data } = await axios.post('https://toheedcouture.com/api/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       
@@ -29,7 +29,7 @@ const AdminBanners = () => {
       const imageUrl = data[0]; 
 
       const updatedBanners = [...(settings.banners || []), imageUrl];
-      await axios.put('http://localhost:5000/api/settings', { banners: updatedBanners }, config);
+      await axios.put('https://toheedcouture.com/api/settings', { banners: updatedBanners }, config);
       toast.success('Top Banner Added');
       fetchSettings();
       setUploadingTop(false);
@@ -43,7 +43,7 @@ const AdminBanners = () => {
     if(!window.confirm("Delete Top Banner?")) return;
     try {
       const updatedBanners = settings.banners.filter((_, i) => i !== index);
-      await axios.put('http://localhost:5000/api/settings', { banners: updatedBanners }, config);
+      await axios.put('https://toheedcouture.com/api/settings', { banners: updatedBanners }, config);
       toast.success('Deleted');
       fetchSettings();
     } catch (err) { toast.error('Error deleting'); }
@@ -59,7 +59,7 @@ const AdminBanners = () => {
     
     setUploadingLow(true);
     try {
-      const { data } = await axios.post('http://localhost:5000/api/upload', formData, {
+      const { data } = await axios.post('https://toheedcouture.com/api/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       
@@ -67,7 +67,7 @@ const AdminBanners = () => {
       const imageUrl = data[0];
 
       const updatedLower = [...(settings.lowerBanners || []), imageUrl];
-      await axios.put('http://localhost:5000/api/settings', { lowerBanners: updatedLower }, config);
+      await axios.put('https://toheedcouture.com/api/settings', { lowerBanners: updatedLower }, config);
       toast.success('Lower Banner Added');
       fetchSettings();
       setUploadingLow(false);
@@ -81,7 +81,7 @@ const AdminBanners = () => {
     if(!window.confirm("Delete Lower Banner?")) return;
     try {
       const updatedLower = settings.lowerBanners.filter((_, i) => i !== index);
-      await axios.put('http://localhost:5000/api/settings', { lowerBanners: updatedLower }, config);
+      await axios.put('https://toheedcouture.com/api/settings', { lowerBanners: updatedLower }, config);
       toast.success('Deleted');
       fetchSettings();
     } catch (err) { toast.error('Error deleting'); }

@@ -8,12 +8,12 @@ const AdminOrders = () => {
   const token = JSON.parse(localStorage.getItem('userInfo')).token;
   const config = { headers: { Authorization: `Bearer ${token}` } };
 
-  const fetchOrders = () => axios.get('http://localhost:5000/api/orders', config).then(res => setOrders(res.data));
+  const fetchOrders = () => axios.get('https://toheedcouture.com/api/orders', config).then(res => setOrders(res.data));
   useEffect(() => { fetchOrders(); }, []);
 
   const updateStatus = async (id, status) => {
     try {
-      await axios.put(`http://localhost:5000/api/orders/${id}/status`, { status }, config);
+      await axios.put(`https://toheedcouture.com/api/orders/${id}/status`, { status }, config);
       toast.success(`Order Marked as ${status}`);
       fetchOrders();
     } catch (error) { toast.error("Status update failed"); }
@@ -22,7 +22,7 @@ const AdminOrders = () => {
   const handleDelete = async (id) => {
     if(!window.confirm("Are you sure you want to DELETE this order?")) return;
     try {
-      await axios.delete(`http://localhost:5000/api/orders/${id}`, config);
+      await axios.delete(`https://toheedcouture.com/api/orders/${id}`, config);
       toast.success("Order Deleted");
       fetchOrders();
     } catch (error) { toast.error("Delete failed"); }
@@ -33,7 +33,7 @@ const AdminOrders = () => {
     let img = item.image || (item.images && item.images.length > 0 ? item.images[0] : null);
     if (!img) return 'https://via.placeholder.com/50';
     if (img.startsWith('http')) return img;
-    return `http://localhost:5000/${img.replace(/\\/g, '/')}`;
+    return `https://toheedcouture.com/${img.replace(/\\/g, '/')}`;
   };
 
   return (

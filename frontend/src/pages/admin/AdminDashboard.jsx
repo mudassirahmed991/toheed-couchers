@@ -9,8 +9,8 @@ const AdminDashboard = () => {
   useEffect(() => {
     const token = JSON.parse(localStorage.getItem('userInfo')).token;
     const config = { headers: { Authorization: `Bearer ${token}` } };
-    axios.get('http://localhost:5000/api/orders', config).then(res => setOrders(res.data));
-    axios.get('http://localhost:5000/api/products').then(res => setProducts(res.data));
+    axios.get('https://toheedcouture.com/api/orders', config).then(res => setOrders(res.data));
+    axios.get('https://toheedcouture.com/api/products').then(res => setProducts(res.data));
   }, []);
 
   const totalRevenue = orders.reduce((acc, order) => acc + (order.totalPrice || 0), 0);

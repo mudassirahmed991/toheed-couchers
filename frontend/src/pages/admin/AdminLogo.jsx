@@ -20,7 +20,7 @@ const AdminLogo = () => {
     setUploading(true);
 
     try {
-      const { data } = await axios.post('http://localhost:5000/api/upload', formData, {
+      const { data } = await axios.post('https://toheedcouture.com/api/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       
@@ -28,7 +28,7 @@ const AdminLogo = () => {
       const logoUrl = data[0];
 
       // Save Logo URL to Settings
-      await axios.put('http://localhost:5000/api/settings', { logo: logoUrl }, config);
+      await axios.put('https://toheedcouture.com/api/settings', { logo: logoUrl }, config);
       toast.success('Logo Updated Successfully');
       fetchSettings();
       setUploading(false);
