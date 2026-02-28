@@ -20,7 +20,7 @@ const AdminProducts = () => {
   const token = JSON.parse(localStorage.getItem('userInfo')).token;
   const config = { headers: { Authorization: `Bearer ${token}` } };
 
-  const fetchProducts = () => axios.get('https://toheedcouture.com/api/products').then(res => setProducts(res.data));
+  const fetchProducts = () => axios.get('http://localhost:5000/api/products').then(res => setProducts(res.data));
   useEffect(() => { fetchProducts(); }, []);
 
   const uploadFileHandler = async (e) => {
@@ -29,7 +29,7 @@ const AdminProducts = () => {
     for (let i = 0; i < files.length; i++) { formData.append('images', files[i]); }
     setUploading(true);
     try {
-      const { data } = await axios.post('https://toheedcouture.com/api/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' }});
+      const { data } = await axios.post('http://localhost:5000/api/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' }});
       setForm({...form, images: [...form.images, ...data]});
       setUploading(false);
     } catch (error) { toast.error('Upload Failed'); setUploading(false); }
@@ -47,7 +47,6 @@ const AdminProducts = () => {
   const addSize = (e) => {
     e.preventDefault();
     if(sizeName.trim()) {
-        // Naya size object banayein
         const newSize = { name: sizeName.trim(), dimensions: sizeDim.trim() };
         setForm({ ...form, sizes: [...form.sizes, newSize] });
         setSizeName('');
@@ -83,11 +82,11 @@ const AdminProducts = () => {
     if (form.images.length === 0) return toast.error("Upload at least one image!");
     try {
       if (isEditing) {
-        await axios.put(`https://toheedcouture.com/api/products/${editId}`, form, config);
+        await axios.put(`http://localhost:5000/api/products/${editId}`, form, config);
         toast.success('Product Updated');
         handleCancelEdit();
       } else {
-        await axios.post('https://toheedcouture.com/api/products', form, config);
+        await axios.post('http://localhost:5000/api/products', form, config);
         toast.success('Product Added');
         setForm({ name: '', price: '', category: '', images: [], colors: [], sizes: [], stock: '', description: '', isOnSale: false, salePrice: 0, saleEndDate: '' });
       }
@@ -97,7 +96,7 @@ const AdminProducts = () => {
 
   const handleDelete = async (id) => {
     if(window.confirm('Delete this product?')) {
-      await axios.delete(`https://toheedcouture.com/api/products/${id}`, config);
+      await axios.delete(`http://localhost:5000/api/products/${id}`, config);
       fetchProducts();
     }
   };
@@ -126,27 +125,26 @@ const AdminProducts = () => {
             <input placeholder="Stock Quantity" className="border p-2 rounded" type="number" value={form.stock} onChange={e => setForm({...form, stock: e.target.value})} required />
             <div className="col-span-2"><textarea placeholder="Description" className="border p-2 w-full rounded" value={form.description} onChange={e => setForm({...form, description: e.target.value})} /></div>
 
-            {/* SIZES MANAGER - Improved UI */}
+            {/* SIZES MANAGER */}
             <div className="col-span-2 border p-4 rounded bg-gray-50">
-                <label className="block font-bold mb-2">Available Sizes (Add One by One)</label>
+                <label className="block font-bold mb-2">Sizes</label>
                 <div className="flex gap-2 mb-2">
-                    <input placeholder="Size Name (e.g. Small)" className="border p-2 rounded w-1/3" value={sizeName} onChange={e => setSizeName(e.target.value)} />
-                    <input placeholder="Details (e.g. Length 38, Chest 19)" className="border p-2 rounded w-2/3" value={sizeDim} onChange={e => setSizeDim(e.target.value)} />
-                    <button type="button" onClick={addSize} className="bg-blue-600 text-white px-4 rounded hover:bg-blue-700">Add</button>
+                    <input placeholder="Size (e.g. Small)" className="border p-2 rounded w-1/3" value={sizeName} onChange={e => setSizeName(e.target.value)} />
+                    <input placeholder="Details (e.g. Length 38)" className="border p-2 rounded w-2/3" value={sizeDim} onChange={e => setSizeDim(e.target.value)} />
+                    <button type="button" onClick={addSize} className="bg-blue-600 text-white px-4 rounded">Add</button>
                 </div>
                 <div className="flex gap-2 flex-wrap">
                     {form.sizes.map((s, i) => (
                         <div key={i} className="bg-white border px-3 py-1 rounded shadow-sm flex items-center gap-2">
                             <span className="font-bold text-blue-700">{s.name}</span>
                             {s.dimensions && <span className="text-gray-500 text-sm">({s.dimensions})</span>}
-                            <button type="button" onClick={() => removeSize(i)} className="text-red-500 font-bold ml-1 hover:text-red-700">x</button>
+                            <button type="button" onClick={() => removeSize(i)} className="text-red-500 font-bold ml-1">x</button>
                         </div>
                     ))}
                 </div>
-                <p className="text-xs text-gray-500 mt-1">Hint: Add 'Small', click Add. Then add 'Medium', click Add.</p>
             </div>
 
-            {/* Colors & Images */}
+            {/* COLORS MANAGER */}
             <div className="col-span-2 border p-4 rounded bg-gray-50">
                 <label className="block font-bold mb-2">Colors</label>
                 <div className="flex gap-2 mb-2">
@@ -158,6 +156,27 @@ const AdminProducts = () => {
                 </div>
             </div>
 
+            {/* SALE SECTION (YEH RAHA WAPIS) */}
+            <div className="col-span-2 bg-yellow-50 p-4 border border-yellow-200 rounded">
+                <label className="flex items-center gap-2 font-bold mb-2 cursor-pointer select-none">
+                    <input type="checkbox" checked={form.isOnSale} onChange={e => setForm({...form, isOnSale: e.target.checked})} className="w-5 h-5" /> 
+                    Enable Sale Price?
+                </label>
+                {form.isOnSale && (
+                    <div className="grid grid-cols-2 gap-4 mt-2 animate-pulse">
+                        <div>
+                            <label className="text-sm font-bold text-gray-700">Sale Price (Rs.)</label>
+                            <input type="number" className="border p-2 w-full rounded" value={form.salePrice} onChange={e => setForm({...form, salePrice: e.target.value})} />
+                        </div>
+                        <div>
+                            <label className="text-sm font-bold text-gray-700">Sale Ends At</label>
+                            <input type="datetime-local" className="border p-2 w-full rounded" value={form.saleEndDate} onChange={e => setForm({...form, saleEndDate: e.target.value})} />
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* IMAGES */}
             <div className="col-span-2">
               <label className="block mb-1 font-bold">Product Images</label>
               <input type="file" multiple onChange={uploadFileHandler} className="border p-2 w-full rounded" />
@@ -176,8 +195,8 @@ const AdminProducts = () => {
           </div>
         </form>
 
-        {/* RESTORED PRODUCT LIST WITH EDIT/DELETE BUTTONS */}
         <h3 className="text-xl font-bold mb-4">Product List</h3>
+        {/* Table code same as before... */}
         <table className="w-full bg-white shadow rounded overflow-hidden">
           <thead><tr className="bg-gray-200 text-left"><th className="p-3">Image</th><th className="p-3">Name</th><th className="p-3">Price</th><th className="p-3">Sizes</th><th className="p-3">Action</th></tr></thead>
           <tbody>
@@ -187,11 +206,9 @@ const AdminProducts = () => {
                 <td className="p-3 font-semibold">{p.name}</td>
                 <td className="p-3">{p.isOnSale ? <span className="text-red-500 font-bold">{p.salePrice}</span> : p.price}</td>
                 <td className="p-3 text-xs">{p.sizes?.map(s => s.name).join(', ')}</td>
-                
-                {/* BUTTONS ARE BACK HERE */}
                 <td className="p-3 flex gap-2">
-                    <button onClick={() => handleEditClick(p)} className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600">Edit</button>
-                    <button onClick={() => handleDelete(p._id)} className="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600">Delete</button>
+                    <button onClick={() => handleEditClick(p)} className="bg-blue-500 text-white px-3 py-1 rounded text-sm">Edit</button>
+                    <button onClick={() => handleDelete(p._id)} className="bg-red-500 text-white px-3 py-1 rounded text-sm">Delete</button>
                 </td>
               </tr>
             ))}
