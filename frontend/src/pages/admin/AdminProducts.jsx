@@ -20,19 +20,31 @@ const AdminProducts = () => {
   const token = JSON.parse(localStorage.getItem('userInfo')).token;
   const config = { headers: { Authorization: `Bearer ${token}` } };
 
-  const fetchProducts = () => axios.get('http://localhost:5000/api/products').then(res => setProducts(res.data));
+  // Fetch using relative path (Nginx will handle domain)
+  const fetchProducts = () => axios.get('/api/products').then(res => setProducts(res.data));
   useEffect(() => { fetchProducts(); }, []);
 
+  // --- FIXED UPLOAD HANDLER ---
   const uploadFileHandler = async (e) => {
     const files = e.target.files;
     const formData = new FormData();
-    for (let i = 0; i < files.length; i++) { formData.append('images', files[i]); }
+    for (let i = 0; i < files.length; i++) {
+        formData.append('images', files[i]);
+    }
     setUploading(true);
     try {
-      const { data } = await axios.post('http://localhost:5000/api/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' }});
+      // CHANGE: Removed 'http://localhost:5000', used relative path '/api/upload'
+      const { data } = await axios.post('/api/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
       setForm({...form, images: [...form.images, ...data]});
       setUploading(false);
-    } catch (error) { toast.error('Upload Failed'); setUploading(false); }
+      toast.success("Images Uploaded!");
+    } catch (error) { 
+      console.error(error);
+      toast.error('Upload Failed'); 
+      setUploading(false); 
+    }
   };
 
   const addColor = (e) => {
@@ -80,13 +92,14 @@ const AdminProducts = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (form.images.length === 0) return toast.error("Upload at least one image!");
+
     try {
       if (isEditing) {
-        await axios.put(`http://localhost:5000/api/products/${editId}`, form, config);
+        await axios.put(`/api/products/${editId}`, form, config);
         toast.success('Product Updated');
         handleCancelEdit();
       } else {
-        await axios.post('http://localhost:5000/api/products', form, config);
+        await axios.post('/api/products', form, config);
         toast.success('Product Added');
         setForm({ name: '', price: '', category: '', images: [], colors: [], sizes: [], stock: '', description: '', isOnSale: false, salePrice: 0, saleEndDate: '' });
       }
@@ -96,7 +109,7 @@ const AdminProducts = () => {
 
   const handleDelete = async (id) => {
     if(window.confirm('Delete this product?')) {
-      await axios.delete(`http://localhost:5000/api/products/${id}`, config);
+      await axios.delete(`/api/products/${id}`, config);
       fetchProducts();
     }
   };
@@ -125,7 +138,7 @@ const AdminProducts = () => {
             <input placeholder="Stock Quantity" className="border p-2 rounded" type="number" value={form.stock} onChange={e => setForm({...form, stock: e.target.value})} required />
             <div className="col-span-2"><textarea placeholder="Description" className="border p-2 w-full rounded" value={form.description} onChange={e => setForm({...form, description: e.target.value})} /></div>
 
-            {/* SIZES MANAGER */}
+            {/* SIZES */}
             <div className="col-span-2 border p-4 rounded bg-gray-50">
                 <label className="block font-bold mb-2">Sizes</label>
                 <div className="flex gap-2 mb-2">
@@ -144,7 +157,7 @@ const AdminProducts = () => {
                 </div>
             </div>
 
-            {/* COLORS MANAGER */}
+            {/* COLORS */}
             <div className="col-span-2 border p-4 rounded bg-gray-50">
                 <label className="block font-bold mb-2">Colors</label>
                 <div className="flex gap-2 mb-2">
@@ -156,22 +169,16 @@ const AdminProducts = () => {
                 </div>
             </div>
 
-            {/* SALE SECTION (YEH RAHA WAPIS) */}
+            {/* SALE */}
             <div className="col-span-2 bg-yellow-50 p-4 border border-yellow-200 rounded">
                 <label className="flex items-center gap-2 font-bold mb-2 cursor-pointer select-none">
                     <input type="checkbox" checked={form.isOnSale} onChange={e => setForm({...form, isOnSale: e.target.checked})} className="w-5 h-5" /> 
                     Enable Sale Price?
                 </label>
                 {form.isOnSale && (
-                    <div className="grid grid-cols-2 gap-4 mt-2 animate-pulse">
-                        <div>
-                            <label className="text-sm font-bold text-gray-700">Sale Price (Rs.)</label>
-                            <input type="number" className="border p-2 w-full rounded" value={form.salePrice} onChange={e => setForm({...form, salePrice: e.target.value})} />
-                        </div>
-                        <div>
-                            <label className="text-sm font-bold text-gray-700">Sale Ends At</label>
-                            <input type="datetime-local" className="border p-2 w-full rounded" value={form.saleEndDate} onChange={e => setForm({...form, saleEndDate: e.target.value})} />
-                        </div>
+                    <div className="grid grid-cols-2 gap-4 mt-2">
+                        <div><label className="text-sm font-bold text-gray-700">Sale Price</label><input type="number" className="border p-2 w-full rounded" value={form.salePrice} onChange={e => setForm({...form, salePrice: e.target.value})} /></div>
+                        <div><label className="text-sm font-bold text-gray-700">Sale Ends At</label><input type="datetime-local" className="border p-2 w-full rounded" value={form.saleEndDate} onChange={e => setForm({...form, saleEndDate: e.target.value})} /></div>
                     </div>
                 )}
             </div>
@@ -196,7 +203,6 @@ const AdminProducts = () => {
         </form>
 
         <h3 className="text-xl font-bold mb-4">Product List</h3>
-        {/* Table code same as before... */}
         <table className="w-full bg-white shadow rounded overflow-hidden">
           <thead><tr className="bg-gray-200 text-left"><th className="p-3">Image</th><th className="p-3">Name</th><th className="p-3">Price</th><th className="p-3">Sizes</th><th className="p-3">Action</th></tr></thead>
           <tbody>

@@ -1,8 +1,8 @@
 import React, { useState, useContext } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { GlobalContext } from '../../App';
+import { Link } from 'react-router-dom';
 
 const AdminLogo = () => {
   const { settings, fetchSettings } = useContext(GlobalContext);
@@ -13,22 +13,16 @@ const AdminLogo = () => {
   const uploadFileHandler = async (e) => {
     const file = e.target.files[0];
     const formData = new FormData();
-    
-    // CHANGE: Backend ab 'images' maang raha hai (Array)
     formData.append('images', file);
-    
     setUploading(true);
 
     try {
-      const { data } = await axios.post('https://toheedcouture.com/api/upload', formData, {
+      // FIX: Use relative path /api/upload
+      const { data } = await axios.post('/api/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      
-      // CHANGE: Backend array return karta hai, pehla item uthao
       const logoUrl = data[0];
-
-      // Save Logo URL to Settings
-      await axios.put('https://toheedcouture.com/api/settings', { logo: logoUrl }, config);
+      await axios.put('/api/settings', { logo: logoUrl }, config);
       toast.success('Logo Updated Successfully');
       fetchSettings();
       setUploading(false);
